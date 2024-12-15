@@ -37,7 +37,6 @@ export default function LoginScreen() {
 
       if (result.success) {
         setIsAuthenticated(true);
-        Alert.alert('Success', 'You are authenticated!');
         router.replace('/HistoryScreen');
       } else {  
         Alert.alert('Error', 'Authentication failed or canceled.');

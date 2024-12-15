@@ -1,5 +1,7 @@
-import { View, Text, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { SvgUri } from 'react-native-svg';
 
 export default function HistoryScreen() {
 
@@ -126,17 +128,46 @@ export default function HistoryScreen() {
         }
       ]
       );
+      const [isReveal, setIsReveal] = useState(-1); // -1 means no sensitive transaction data is revealed, otherwise it's the index of the transaction
+
+      const handleReveal = async (index: number) => {
+        // Note: This example is intended to only reveal the content for one transaction at a time.
+
+        if (isReveal == index) { // hide the content if it's already revealed
+            setIsReveal(-1);
+            return;
+        }
+        try {
+            const result = await LocalAuthentication.authenticateAsync({
+              promptMessage: 'Authenticate to view transaction details',
+              fallbackLabel: 'Enter Password',
+              disableDeviceFallback: false,
+            });
+      
+            if (result.success) {
+              setIsReveal(index);
+            } else {  
+              Alert.alert('Error', 'Authentication failed or canceled.');
+            }
+          } catch (error) {
+            Alert.alert('Error', 'An unexpected error occurred.');
+            console.error(error);
+          }
+      };
 
     return <View className='w-scrreen h-screen justify-center bg-black pt-20 pb-10'>
         <Text className='text-white text-3xl font-bold mb-5 text-center'>Transaction History</Text>
         <ScrollView className='w-full px-3 overflow-y-auto border border-gray-500 rounded-lg'>
             {data.map((item, index) => {
-                return <View key={index} className='w-full flex flex-col border-b border-gray-500 py-3'>
-                    <TouchableOpacity>
-                        <Text className='text-white text-lg'><Text className='font-semibold'>Amount:</Text> {item.amount}</Text>
+                return <View key={index} className='w-full flex flex-row justify-between items-center border-b border-gray-500 py-3'>
+                    <TouchableOpacity className='flex flex-col'>
+                        <Text className='text-white text-lg'><Text className='font-semibold'>Amount:</Text> <Text>{isReveal == index ? item.amount : '***'}</Text></Text>
                         <Text className='text-white text-lg'><Text className='font-semibold'>Date:</Text> {item.date}</Text>
                         <Text className='text-white text-lg'><Text className='font-semibold'>Description:</Text> {item.description}</Text>
-                        <Text className='text-white text-lg'><Text className='font-semibold'>Type:</Text> {item.type}</Text>
+                        <Text className='text-white text-lg'><Text className='font-semibold'>Type:</Text> {item.type == 1 ? 'Debit' : 'Credit'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity className='size-7 mr-10' onPress={() => handleReveal(index)}>
+                        <Image source={require('../images/view-hidden.png')} className='size-full'  />
                     </TouchableOpacity>
                 </View>
             })}
