@@ -1,7 +1,6 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { SvgUri } from 'react-native-svg';
 
 export default function HistoryScreen() {
 
@@ -129,6 +128,22 @@ export default function HistoryScreen() {
       ]
       );
       const [isReveal, setIsReveal] = useState(-1); // -1 means no sensitive transaction data is revealed, otherwise it's the index of the transaction
+      const [refreshing, setRefreshing] = useState(false);
+      const onRefresh = useCallback(() => { // refreshing adds a new transaction to the data array
+        setRefreshing(true);
+        setTimeout(() => {
+          setRefreshing(false);
+          setData((prevData) => [
+            ...prevData, // spreading the previous data
+            {
+                amount: 250,
+                date: "2024-03-10",
+                description: "Payment to Rachel Green",
+                type: 1,
+            },
+        ]);
+        }, 2000);    
+      }, []);
 
       const handleReveal = async (index: number) => {
         // Note: This example is intended to only reveal the content for one transaction at a time.
@@ -157,7 +172,11 @@ export default function HistoryScreen() {
 
     return <View className='w-scrreen h-screen justify-center bg-black pt-20 pb-10'>
         <Text className='text-white text-3xl font-bold mb-5 text-center'>Transaction History</Text>
-        <ScrollView className='w-full px-3 overflow-y-auto border border-gray-500 rounded-lg'>
+        <View className='relative flex flex-row items-center'>
+            <Text className='text-white mb-1 ml-2 text-lg font-bold'>Count: {data.length}</Text>
+            <Text className='text-white text-center mb-1 absolute left-1/2 -translate-x-1/2'>Pull down to refresh...</Text>
+        </View>
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} className='w-full px-3 overflow-y-auto border border-gray-500 rounded-lg'>
             {data.map((item, index) => {
                 return <View key={index} className='w-full flex flex-row justify-between items-center border-b border-gray-500 py-3'>
                     <TouchableOpacity className='flex flex-col'>
