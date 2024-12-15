@@ -1,11 +1,12 @@
 import { View, Text, Alert, TouchableOpacity } from 'react-native';
 import { useState, useEffect } from 'react';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { useRouter } from 'expo-router';
 
-export default function Index() {
+export default function LoginScreen() {
   const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
     const checkBiometricSupport = async () => {
       const hardwareSupported = await LocalAuthentication.hasHardwareAsync();
@@ -37,7 +38,8 @@ export default function Index() {
       if (result.success) {
         setIsAuthenticated(true);
         Alert.alert('Success', 'You are authenticated!');
-      } else {
+        router.replace('/HistoryScreen');
+      } else {  
         Alert.alert('Error', 'Authentication failed or canceled.');
       }
     } catch (error) {
