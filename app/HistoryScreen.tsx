@@ -170,8 +170,8 @@ export default function HistoryScreen() {
       ]
       );
       const [isReveal, setIsReveal] = useState(-1); // -1 means no sensitive transaction data is revealed, otherwise it's the index of the transaction
-      const [refreshing, setRefreshing] = useState(false);
-      const [viewTransaction, setViewTransaction] = useState(false);
+      const [refreshing, setRefreshing] = useState(false); // refreshing state for pull down to refresh
+      const [viewTransaction, setViewTransaction] = useState(false); // view transaction details state (boolean)
       const [transactionData, setTransactionData] = useState<Transaction>({
         amount: 0,
         date: "",
@@ -179,10 +179,10 @@ export default function HistoryScreen() {
         type: 1,
         location: '',
         category: ''
-      });
+      }); // transaction data state
       const onRefresh = useCallback(() => { // refreshing adds a new transaction to the data array
-        setRefreshing(true);
-        setTimeout(() => {
+        setRefreshing(true); // set refreshing state to true
+        setTimeout(() => { // simulate a 2-second delay before adding a new transaction
           setRefreshing(false);
           setData((prevData) => [
             ...prevData, // spreading the previous data
@@ -224,6 +224,7 @@ export default function HistoryScreen() {
       };
 
       const handlePress = (index: number) => {
+        // opens a popup screen to view the transaction details
         setViewTransaction(true);
         setTransactionData(data[index]);
       };
@@ -235,7 +236,10 @@ export default function HistoryScreen() {
             <Text className='text-white text-center mb-1 absolute left-1/2 -translate-x-1/2'>Pull down to refresh...</Text>
         </View>
         <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} className='w-full px-3 overflow-y-auto border border-gray-500 rounded-lg'>
-            {data.map((item, index) => {
+        {refreshing && <Text className="text-white text-center my-2">Loading...</Text>}
+        {data.length == 0 ? 
+        <Text className="text-white text-center my-5">No transactions available.</Text> : 
+        (data.map((item, index) => {
                 return <View key={index} className='w-full flex flex-row justify-between items-center border-b border-gray-500 py-3'>
                     <TouchableOpacity onPress={() => handlePress(index)} className='flex flex-col'>
                         <Text className='text-white text-lg'><Text className='font-semibold'>Amount:</Text> <Text>{isReveal == index ? item.amount : '***'}</Text></Text>
@@ -247,8 +251,8 @@ export default function HistoryScreen() {
                         <Image source={require('../images/view-hidden.png')} className='size-full'  />
                     </TouchableOpacity>
                 </View>
-            })}
+            }))}
         </ScrollView>
-            {viewTransaction && <TransactionDetails data={transactionData} setViewTransaction={setViewTransaction} setTransactionData={setTransactionData} />}
+            {viewTransaction && <TransactionDetails data={transactionData} setViewTransaction={setViewTransaction} />}
     </View>
 };

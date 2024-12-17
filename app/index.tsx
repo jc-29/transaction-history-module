@@ -4,23 +4,22 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
-  const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false); // boolean to check if biometrics is available
+
   const router = useRouter();
+
   useEffect(() => {
+    // Check if biometrics is available on the device as soon as the component mounts
     const checkBiometricSupport = async () => {
-      const hardwareSupported = await LocalAuthentication.hasHardwareAsync();
-      const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-
-      console.log('Hardware Supported:', hardwareSupported);
-      console.log('Supported Types:', supportedTypes);
-
+      const hardwareSupported = await LocalAuthentication.hasHardwareAsync(); // Check if the device supports biometrics
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync(); // Check if the user has enrolled biometrics
       if (
-        hardwareSupported
+        hardwareSupported && isEnrolled
       ) {
         setIsBiometricsAvailable(true);
       } else {
-        Alert.alert('Biometrics not available', 'Your device does not support biometric authentication.');
+        setIsBiometricsAvailable(false);
+        Alert.alert('Biometrics not available', 'Your device does not support biometric authentication.'); // Show an alert if biometrics is not available
       }
     };
 
@@ -28,6 +27,7 @@ export default function LoginScreen() {
   }, []);
 
   const handleBiometricLogin = async () => {
+    // Authenticate the user using biometrics
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Login with Biometrics',
@@ -36,13 +36,17 @@ export default function LoginScreen() {
       });
 
       if (result.success) {
-        setIsAuthenticated(true);
-        router.replace('/HistoryScreen');
-      } else {  
-        Alert.alert('Error', 'Authentication failed or canceled.');
+        router.replace('/HistoryScreen'); // Redirect to the HistoryScreen when authentication is successful
+      } else if (result.error == 'user_cancel') {
+        Alert.alert('Authentication Cancelled', 'Authentication canceled by user.'); // Show an alert if authentication is canceled by the user
+      } else if (result.error == 'system_cancel') {
+        Alert.alert('Authentication Interrupted', 'Authentication interrupted by the system.'); // Show an alert if authentication is interrupted by the system
+      }
+      else {  
+        Alert.alert('Authentication Failed', 'Authentication failed.'); // Show an alert if authentication fails
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred.');
+      Alert.alert('Error', 'An unexpected error occurred.'); // Show an alert if an unexpected error occurs
       console.error(error);
     }
   };
